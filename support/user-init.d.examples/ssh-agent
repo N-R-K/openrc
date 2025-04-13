@@ -1,0 +1,15 @@
+#!/sbin/openrc-run
+
+command="/usr/bin/ssh-agent"
+sock="${SSH_AUTH_SOCK:-/run/user-$USER/ssh-agent.sock}"
+command_args="-D -a ${sock}"
+
+supervisor=supervise-daemon
+
+start_pre() {
+	if [ -z "${SSH_AUTH_SOCK}" ]; then
+		ewarn "SSH_AUTH_SOCK not set in the enviornment"
+		ewarn "placing ssh-agent socket at ${sock}"
+		ewarn "make sure to export this as SSH_AUTH_SOCK in your enviornment"
+	fi
+}

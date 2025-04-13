@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+#
+# NOTE: required patches for a clean exit:
+# https://github.com/jcs/xbanish/pull/83
+
+command="/usr/bin/xbanish"
+command_args="${XBANISH_OPTS}"  # set XBANISH_OPTS in conf.d/
+
+supervisor=supervise-daemon
+respawn_delay=256ms
+respawn_max=8
+respawn_period=16
+
+start_pre() {
+	if [ -z "${DISPLAY}" ]; then
+		eerror "DISPLAY not set, make sure it's allowed through rc_env_allow"
+		return 1
+	fi
+}
+
+# depend() { need X; }
