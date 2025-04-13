@@ -4,7 +4,7 @@
 
 sysconfdir="${XDG_CONFIG_HOME:-${HOME}/.config}/rc"
 cachedir="${XDG_CACHE_HOME:-${HOME}/.cache}/rc"
-svcdir="${XDG_RUNTIME_DIR?}/openrc"
+svcdir="/run/user-$(whoami)/openrc"
 
 for config in "@SYSCONFDIR@/rc.conf" "$sysconfdir/rc.conf"; do
 	if [ -e "$config" ] && ! . "$config"; then

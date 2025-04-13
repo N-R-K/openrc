@@ -599,6 +599,20 @@ rc_is_user(void)
 	return is_user;
 }
 
+#include <sys/types.h>
+#include <pwd.h>
+static const char *get_username(void)
+{
+	static char buf[1<<12];
+	struct passwd pwbuf, *pw;
+	getpwuid_r(getuid(), &pwbuf, buf, sizeof(buf), &pw);
+	if (!pw) {
+		fprintf(stderr, "librc: failed to get username: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	return pw->pw_name;
+}
+
 void
 rc_set_user(void)
 {
@@ -621,15 +635,9 @@ rc_set_user(void)
 
 	xasprintf(&rc_dirs.runleveldir, "%s/runlevels", rc_dirs.usrconfdir);
 
-	if (!(env = getenv("XDG_RUNTIME_DIR"))) {
-		/* FIXME: fallback to something else? */
-		fprintf(stderr, "XDG_RUNTIME_DIR unset.\n");
-		exit(EXIT_FAILURE);
-	}
+	xasprintf(&rc_dirs.svcdir, "/run/user-%s/openrc", get_username());
 
-	xasprintf(&rc_dirs.svcdir, "%s/openrc", env);
 	atexit(free_rc_dirs);
-
 
 	rc_dirs.scriptdirs[SCRIPTDIR_USR] = rc_dirs.usrconfdir;
 	rc_dirs.scriptdirs[SCRIPTDIR_SVC] = rc_dirs.svcdir;

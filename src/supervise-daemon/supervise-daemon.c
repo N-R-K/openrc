@@ -792,6 +792,16 @@ RC_NORETURN static void supervisor(char *exec, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
+static const char *get_username(void)
+{
+	static char buf[1<<12];
+	struct passwd pwbuf, *pw;
+	int r = getpwuid_r(getuid(), &pwbuf, buf, sizeof(buf), &pw);
+	if (!pw)
+		eerrorx("%s: failed to get username: %s", applet, strerror(errno));
+	return pw->pw_name;
+}
+
 int main(int argc, char **argv)
 {
 	int opt;
@@ -1100,8 +1110,10 @@ int main(int argc, char **argv)
 		ch_root = expand_home(home, ch_root);
 
 	umask(numask);
-	if (!pidfile)
-		xasprintf(&pidfile, "%s/supervise-%s.pid", rc_is_user() ? getenv("XDG_RUNTIME_DIR") : "/var/run", svcname);
+	if (!pidfile && rc_is_user())
+		xasprintf(&pidfile, "/run/user-%s/supervise-%s.pid", get_username(), svcname);
+	else if (!pidfile)
+		xasprintf(&pidfile, "/var/run/supervise-%s.pid", svcname);
 	xasprintf(&fifopath, "%s/supervise-%s.ctl", rc_svcdir(), svcname);
 	if (mkfifo(fifopath, 0600) == -1 && errno != EEXIST)
 		eerrorx("%s: unable to create control fifo: %s",
