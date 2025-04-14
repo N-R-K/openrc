@@ -11,9 +11,10 @@ respawn_max=8
 respawn_period=16
 
 start_pre() {
-	x_env="/run/user-$(whoami)/X.env"
-	[ -z "${DISPLAY}" ] && [ -f "$x_env" ] && . "$x_env"
-	export DISPLAY
+	if [ -z "${DISPLAY}" ]; then
+		eerror "DISPLAY not set, make sure it's allowed through rc_env_allow"
+		return 1
+	fi
 }
 
-depend() { need X; }
+# depend() { need X; }
