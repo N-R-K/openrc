@@ -525,6 +525,11 @@ svc_wait(const char *svc)
 			alarm(WARN_TIMEOUT);
 
 		if (flock(fd, LOCK_SH) == 0) {
+			if (existsat(rc_dirfd(RC_DIR_EXCLUSIVE), base)) {
+				flock(fd, LOCK_UN);
+				tm_sleep(10, TM_NO_EINTR);
+				continue;
+			}
 			retval = true;
 			break;
 		}
