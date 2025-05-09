@@ -643,6 +643,8 @@ svc_start_deps(void)
 	char *tmp;
 	FILE *mem;
 	pid_t pid;
+	pid_t *pidlist = NULL;
+	size_t pidlist_len = 0;
 
 	errno = 0;
 	if (rc_conf_yesno("rc_depend_strict") || errno == ENOENT)
@@ -695,12 +697,23 @@ svc_start_deps(void)
 				pid = service_start(svc->value);
 				if (!rc_conf_yesno("rc_parallel"))
 					rc_waitpid(pid);
+				else {
+					pidlist = xrealloc(pidlist, ++pidlist_len * sizeof *pidlist);
+					pidlist[pidlist_len - 1] = pid;
+				}
 			}
 		}
 	}
 
 	if (dry_run)
 		return;
+
+	while (pidlist_len > 0) {
+		pid = pidlist[--pidlist_len];
+		rc_waitpid(pid);
+	}
+	free(pidlist);
+	pidlist = NULL;
 
 	/* Now wait for them to start */
 	services = rc_deptree_depends(deptree, deptypes_nwua, applet_list,
